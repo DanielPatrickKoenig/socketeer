@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset="UTF-8">
+        <title>Starter</title>
+        <style>
+            #playerContainer{
+                width:500px;
+                height: 500px;
+                position: relative;
+            }
+            #dcontent{
+                width:800px;
+                height: 800px;
+                position:fixed;
+                top:0;
+                left:0;
+            }
+            #playerSVG{
+                position: fixed;
+                width:500px;
+                height: 500px;
+                left:0;
+                top: 0;
+                /* position: relative; */
+            }
+            #playerContainer > a{
+                background-color:#cc0000;
+                display:inline-block;
+                width:20px;
+                height:20px;
+                position:absolute;
+            }
+            ul#userListContainer{
+                position: fixed;
+                z-index: 4000;
+                width:200px;
+                display: inline-block;
+                padding: 0;
+                top: 0;
+                left: 0;
+                margin: 0;
+                background-color:rgba(255,255,255,.6);
+
+
+            }
+            div#userIdentifierForm{
+                position: fixed;
+                width:200px;
+                height: 70px;
+                left: 50%;
+                margin-left:-100px;
+                top: 50%;
+                margin-top:-35px;
+                z-index: 4001;
+            }
+            div#userIdentifierForm > input,
+            div#userIdentifierForm > button{
+                width:100%;
+                display: block;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="playerContainer">
+
+        </div>
+        <svg id="playerSVG">
+
+        </svg>
+        <div id="playerContainer">
+
+        </div>
+        <ul id="userListContainer">
+
+        </ul>
+        <div id="userIdentifierForm">
+                <input type="text" id="userIdentifier" placeholder="Please enter your first name" />
+                <button id="userIdentifierSubmit">Submit</button>
+        </div>
+        <div id="dcontent"></div>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="main.js"></script>
+        <script src="three/three.min.js"></script>
+        <script src="v4v.js"></script>
+        <script src="ObjectBuilder.js"></script>
+        <script src="PlayerPOV.js"></script>
+        <script>
+            document.getElementById("userIdentifierSubmit").addEventListener('click',function(e){
+                var _pid = playerIdentifier = document.getElementById('userIdentifier').value;
+                if(_pid == undefined || _pid == null || _pid == ''){
+                    alert('You must enter a name.');
+                }
+                else{
+                    playerIdentifier = _pid;
+                    _socketapp.init(playerIdentifier);
+                    document.getElementById("userIdentifierForm").style.display = "none";
+                    pp = new PlayerPOV(objectMatrix);
+                    pp.loadModel('models/town6.json',objectMatrix.BUS_STATION,function(o){
+                        console.log('object loaded');
+                    });
+                }
+                
+            });
+            var playerIdentifier;
+            var objectMatrix = {ROAD:'road',BUS_STATION:'bus_station',GALLERY:'gallery',TOWN_HALL:'town_hall'};
+            var pp = {};
+            // var road = pp.loadPlaneWithTexture('images/road.jpg',objectMatrix.BUS_STATION,300,300);
+            // var playerIdentifier = 'player_'+Math.random().toString().split('.').join('')+Math.random().toString().split('.').join('')+Math.random().toString().split('.').join('');
+            // var playerIdentifier = document.location.search;
+            //getParameterByName('playerid');
+            var playerContainer = document.getElementById('playerSVG');
+            var playerPos = {x: Math.random()*playerContainer.getBoundingClientRect().width, y: Math.random()*playerContainer.getBoundingClientRect().height,r:0}
+            var stage = v4v.stage(playerContainer);
+            var mobileMode = false;
+            var keyStates = {
+                up: { code: 38, active: false },
+                down: { code: 40, active: false },
+                left: { code: 39, active: false },
+                right: { code: 37, active: false }
+            }
+            _socketapp.setInitaHandler(function(socket,id){
+                
+                mapKeyEvents(mobileMode);
+
+                setInterval(function () {
+                    processKeyInput();
+
+                    pp.update(id, playerPos);
+                    // updatePlayer(id, playerPos);
+                    // renderer.render(scene, camera);
+                    
+                }, 100);
+
+                // playerContainer.addEventListener('mousemove',function(e){
+                //     playerPos.x = e.pageX;
+                //     playerPos.y = e.pageY;
+                //     updatePlayer(id, playerPos);
+                // });
+            });
+            _socketapp.setUpdateSocketHandler(function(socket,id){
+                socket.emit('player-action',{
+                    id: id, x: playerPos.x, y: playerPos.y, r: playerPos.r
+                });
+            });
+            _socketapp.setUpdatePlayerHandler(function(id, props, pid){
+                return updatePlayer(id, props, pid)
+            });
+            _socketapp.setRemovePlayerHandler(function(id){
+                var targetPlayer = document.getElementById(id);
+                if(targetPlayer != undefined && targetPlayer != null){
+                    targetPlayer.parentNode.removeChild(targetPlayer);
+                }
+            });
+
+            _socketapp.setListUpdateHandler(function (list) {
+                var listContainer = document.getElementById('userListContainer');
+                listContainer.innerHTML = '';
+                var listString = '';
+                for(var i = 0;i<list.length;i++){
+                    listString+='<li>'+list[i]+'</li>';
+                }
+                listContainer.innerHTML = listString;
+            });
+
+
+            
+            function updatePlayer(id, props, pid){
+                // console.log('player - ' + id.toString());
+                var spt = undefined;
+                if(document.getElementById(id) == undefined){
+                    spt = v4v.ellipse(stage, {cx:playerPos.x, cy:playerPos.y, rx:20, ry:30, transform:"rotate("+playerPos.r+","+playerPos.x+","+playerPos.y+")"}).getElement();
+                    // spt.setAttribute('style', 'left:'+playerPos.x+'px;;top:'+playerPos.y+'px;');
+                    spt.setAttribute('class', 'player-marker-element');
+                    spt.setAttribute('id', id);
+                    // listItem.innerHTML = e.greeting;
+                    playerContainer.appendChild(spt);
+                }
+                else if(id != pid){
+                    // console.log(props);
+                    spt = document.getElementById(id);
+                    spt.setAttribute("cx", props.x.toString());
+                    spt.setAttribute("cy", props.y.toString());
+                    spt.setAttribute("rot", props.r);
+                    spt.setAttribute("transform", "rotate("+props.r+","+props.x+","+props.y+")")
+                }
+                return spt;
+            }
+
+            function mapKeyEvents(isMobile) {
+                //window.addEventListener('resize', scaleView);
+                if (isMobile) {
+                    var touchPos = { x: 0, y: 0 }
+                    document.addEventListener('touchstart', function (e) {
+                        // e.preventDefault();
+                        var touches = e.changedTouches;
+                        touchPos = { x: touches[0].pageX, y: touches[0].pageY };
+                        keyStates.up.active = true;
+                    }, false);
+                    document.addEventListener('touchmove', function (e) {
+                        // e.preventDefault();
+                        var touches = e.changedTouches;
+                        var thisTouch = { x: touches[0].pageX, y: touches[0].pageY };
+                        keyStates.right.active = false;
+                        keyStates.left.active = false;
+                        if (thisTouch.x < touchPos.x) {
+                            keyStates.right.active = true;
+                        }
+                        if (thisTouch.x > touchPos.x) {
+                            keyStates.left.active = true;
+                        }
+                        turn = (thisTouch.x - touchPos.x) * .0035;
+                        if (turn > 1) {
+                            turn = 1;
+                        }
+                        if (turn < -1) {
+                            turn = -1;
+                        }
+                        // console.log(turn);
+                    }, false);
+                    document.addEventListener('touchend', function (e) {
+                        // e.preventDefault();
+                        keyStates.right.active = false;
+                        keyStates.left.active = false;
+                        // var touches = e.changhedTouches;
+                        keyStates.up.active = false;
+                    }, false);
+                }
+                else {
+                    document.addEventListener("keydown", function (e) {
+                        var keyCode = e.which;
+                        switch (keyCode) {
+                            case keyStates.up.code: {
+                                keyStates.up.active = true;
+                                break;
+                            }
+                            case keyStates.down.code: {
+                                keyStates.down.active = true;
+                                break;
+                            }
+                            case keyStates.left.code: {
+                                keyStates.left.active = true;
+                                break;
+                            }
+                            case keyStates.right.code: {
+                                keyStates.right.active = true;
+                                break;
+                            }
+                        }
+                    }, false);
+                    document.addEventListener("keyup", function (e) {
+                        var keyCode = e.which;
+                        switch (keyCode) {
+                            case keyStates.up.code: {
+                                keyStates.up.active = false;
+                                break;
+                            }
+                            case keyStates.down.code: {
+                                keyStates.down.active = false;
+                                break;
+                            }
+                            case keyStates.left.code: {
+                                keyStates.left.active = false;
+                                break;
+                            }
+                            case keyStates.right.code: {
+                                keyStates.right.active = false;
+                                break;
+                            }
+                        }
+                    }, false);
+                }
+            }
+            function processKeyInput(){
+                var speed = 5;
+                var rotationSpeed = 6;
+                // console.log(keyStates);
+                if(keyStates.up.active){
+                    // playerPos.y-=5;
+                    playerPos.x = v4v.orbit(playerPos.x, speed, playerPos.r, 'cos');
+                    playerPos.y = v4v.orbit(playerPos.y, speed, playerPos.r, 'sin');
+                }
+                if(keyStates.down.active){
+                    // playerPos.y+=5;
+                    playerPos.x = v4v.orbit(playerPos.x, speed*-1, playerPos.r, 'cos');
+                    playerPos.y = v4v.orbit(playerPos.y, speed*-1, playerPos.r, 'sin');
+                }
+                if(keyStates.left.active){
+                    // playerPos.x+=5
+                    playerPos.r+=rotationSpeed;
+                }
+                if(keyStates.right.active){
+                    // playerPos.x-=5;
+                    playerPos.r-=rotationSpeed;
+                }
+            }
+            function getParameterByName (name, url) {
+
+                if (!url) url = window.location.href;
+
+                name = name.replace(/[\[\]]/g, "\\$&");
+
+                var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+
+                    results = regex.exec(url);
+
+                if (!results) return null;
+
+                if (!results[2]) return '';
+
+                return decodeURIComponent(results[2].replace(/\+/g, " "));
+
+            }
+            //*/
+        </script>
+    </body>
+</html>

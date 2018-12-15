@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset="UTF-8">
+        <title>Starter</title>
+        <style>
+            #playerContainer{
+                width:500px;
+                height: 500px;
+                position: relative;
+            }
+            #playerContainer > a{
+                background-color:#cc0000;
+                display:inline-block;
+                width:20px;
+                height:20px;
+                position:absolute;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="playerContainer">
+
+        </div>
+        <ul id="messageContainer">
+
+        </ul>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="main.js"></script>
+        <script src="three/three.min.js"></script>
+        <script>
+            /*
+
+            var keyStates = {
+                up: { code: 38, active: false },
+                down: { code: 40, active: false },
+                left: { code: 39, active: false },
+                right: { code: 37, active: false }
+            }
+
+            function mapKeyEvents(isMobile) {
+                //window.addEventListener('resize', scaleView);
+                if (isMobile) {
+                    var touchPos = { x: 0, y: 0 }
+                    document.addEventListener('touchstart', function (e) {
+                        // e.preventDefault();
+                        var touches = e.changedTouches;
+                        touchPos = { x: touches[0].pageX, y: touches[0].pageY };
+                        keyStates.up.active = true;
+                    }, false);
+                    document.addEventListener('touchmove', function (e) {
+                        // e.preventDefault();
+                        var touches = e.changedTouches;
+                        var thisTouch = { x: touches[0].pageX, y: touches[0].pageY };
+                        keyStates.right.active = false;
+                        keyStates.left.active = false;
+                        if (thisTouch.x < touchPos.x) {
+                            keyStates.right.active = true;
+                        }
+                        if (thisTouch.x > touchPos.x) {
+                            keyStates.left.active = true;
+                        }
+                        turn = (thisTouch.x - touchPos.x) * .0035;
+                        if (turn > 1) {
+                            turn = 1;
+                        }
+                        if (turn < -1) {
+                            turn = -1;
+                        }
+                        // console.log(turn);
+                    }, false);
+                    document.addEventListener('touchend', function (e) {
+                        // e.preventDefault();
+                        keyStates.right.active = false;
+                        keyStates.left.active = false;
+                        // var touches = e.changhedTouches;
+                        keyStates.up.active = false;
+                    }, false);
+                }
+                else {
+                    document.addEventListener("keydown", function (e) {
+                        var keyCode = event.which;
+                        switch (keyCode) {
+                            case keyStates.up.code: {
+                                keyStates.up.active = true;
+                                break;
+                            }
+                            case keyStates.down.code: {
+                                keyStates.down.active = true;
+                                break;
+                            }
+                            case keyStates.left.code: {
+                                keyStates.left.active = true;
+                                break;
+                            }
+                            case keyStates.right.code: {
+                                keyStates.right.active = true;
+                                break;
+                            }
+                        }
+                    }, false);
+                    document.addEventListener("keyup", function (e) {
+                        var keyCode = event.which;
+                        switch (keyCode) {
+                            case keyStates.up.code: {
+                                keyStates.up.active = false;
+                                break;
+                            }
+                            case keyStates.down.code: {
+                                keyStates.down.active = false;
+                                break;
+                            }
+                            case keyStates.left.code: {
+                                keyStates.left.active = false;
+                                break;
+                            }
+                            case keyStates.right.code: {
+                                keyStates.right.active = false;
+                                break;
+                            }
+                        }
+                    }, false);
+                }
+            }
+
+            mapKeyEvents();
+
+
+            var containerElement = document.getElementById('playerContainer');
+            var _width = containerElement.getBoundingClientRect().width;
+            var _height = containerElement.getBoundingClientRect().height;
+            var renderer = new THREE.WebGLRenderer({ alpha: true });
+            // self.$data.renderer = new self.$data.THREE.WebGLRenderer()
+            renderer.setSize(_width, _height);
+            containerElement.appendChild(renderer.domElement);
+            var scene = new THREE.Scene();
+            var camera = new THREE.PerspectiveCamera(75, _width / _height, 1, 1000);
+            var target = new THREE.Vector3(0, 0, 0);
+            var blankMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
+
+
+            //*/
+
+            //*
+            var playerIdentifier = 'player_'+Math.random().toString().split('.').join('')+Math.random().toString().split('.').join('')+Math.random().toString().split('.').join('');
+            var playerContainer = document.getElementById('playerContainer');
+            var playerPos = {x: Math.random()*playerContainer.getBoundingClientRect().width, y: Math.random()*playerContainer.getBoundingClientRect().height}
+            _socketapp.setInitaHandler(function(socketn,id){
+                playerContainer.addEventListener('mousemove',function(e){
+                    playerPos.x = e.pageX;
+                    playerPos.y = e.pageY;
+                    document.getElementById(id).style.left = playerPos.x.toString()+'px';
+                    document.getElementById(id).style.top = playerPos.y.toString()+'px';
+                });
+            });
+            _socketapp.setUpdateSocketHandler(function(socket,id){
+                socket.emit('player-action',{
+                    id: id, x: playerPos.x, y: playerPos.y
+                });
+            });
+            _socketapp.setUpdatePlayerHandler(function(id, props, pid){
+                var spt = undefined;
+                if(document.getElementById(id) == undefined){
+                    var spt = document.createElement('a');
+                    spt.setAttribute('style', 'left:'+playerPos.x+'px;;top:'+playerPos.y+'px;');
+                    spt.setAttribute('id', id);
+                    // listItem.innerHTML = e.greeting;
+                    playerContainer.appendChild(spt);
+                }
+                else if(id != pid){
+                    console.log(props);
+                    spt = document.getElementById(id);
+                    spt.style.left = props.x.toString()+'px';
+                    spt.style.top = props.y.toString()+'px';
+                }
+                return spt;
+            });
+            _socketapp.setRemovePlayerHandler(function(id){
+                var targetPlayer = document.getElementById(id);
+                if(targetPlayer != undefined && targetPlayer != null){
+                    targetPlayer.parentNode.removeChild(targetPlayer);
+                }
+            });
+            
+            _socketapp.init(playerIdentifier);
+            //*/
+        </script>
+    </body>
+</html>
