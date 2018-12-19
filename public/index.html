@@ -82,6 +82,7 @@
         <script src="/socket.io/socket.io.js"></script>
         <script src="main.js"></script>
         <script src="three/three.min.js"></script>
+        <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js"></script>
         <script src="v4v.js"></script>
         <script src="ObjectBuilder.js"></script>
         <script src="PlayerPOV.js"></script>
@@ -96,7 +97,7 @@
                     _socketapp.init(playerIdentifier);
                     document.getElementById("userIdentifierForm").style.display = "none";
                     pp = new PlayerPOV(objectMatrix);
-                    pp.loadModel('models/town6.json',objectMatrix.BUS_STATION,function(o){
+                    pp.loadModel('models/town2.glb',objectMatrix.BUS_STATION,function(o){
                         console.log('object loaded');
                     });
                 }
