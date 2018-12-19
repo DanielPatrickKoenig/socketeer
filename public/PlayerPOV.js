@@ -141,17 +141,20 @@ function PlayerPOV(_propIDMatrix){
         }
     }
 
-    this.loadModel = function(modelFile,name,handler){
-        var loader = new THREE.GLTFLoader();
+    this.loadModel = function(modelFile,colors,name,handler){
+        var loader = new THREE.ObjectLoader();
         loader.load(modelFile, function (g) {
-            // scene.add(obj);
+            // g.name = name;
+            // console.log(g.children);
+            // g.material = new THREE.MeshPhongMaterial({ color: 0x0000ff });
+            // scene.add(g);
+            // var loadedObjects = [];
+            // loadedObjects.push(g);
             var loadedObjects = [];
-            for (var i = g.scene.children.length - 1; i >= 0; i--) {
-                var obj = g.scene.children[i];
-                // obj.position.x = -34.202299258964096;
-                // obj.position.z = 35.5929460574394;
-                // obj.position.y = .6;
-                // obj.rotation.y = 1.684286204951821;
+            for (var i = g.children.length - 1; i >= 0; i--) {
+                var obj = g.children[i];
+                var _color = colors[i] != undefined ? colors[i] : 0xdddddd;
+                obj.material = new THREE.MeshPhongMaterial({ color: _color });
                 obj.name = name;
                 scene.add(obj);
                 loadedObjects.push(obj);
