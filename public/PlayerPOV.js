@@ -1,9 +1,13 @@
-function PlayerPOV(_propIDMatrix){
+function PlayerPOV(_propIDMatrix,id,canvasContainer,svgContainer){
+    var playerIdentifier = id;
     var propIDMatrix = _propIDMatrix;
-    var containerElement = document.getElementById('dcontent');
+    var containerElement = canvasContainer;
     var _width = containerElement.getBoundingClientRect().width;
     var _height = containerElement.getBoundingClientRect().height;
     var renderer = new THREE.WebGLRenderer({ alpha: true });
+    var playerContainer = svgContainer;
+    var playerPos = {x: Math.random()*playerContainer.getBoundingClientRect().width, y: Math.random()*playerContainer.getBoundingClientRect().height,r:0}
+    var stage = v4v.stage(playerContainer);
     renderer.shadowMap.enabled = true;
     // self.$data.renderer = new self.$data.THREE.WebGLRenderer()
     renderer.setSize(_width, _height);
@@ -54,14 +58,14 @@ function PlayerPOV(_propIDMatrix){
     //     console.log('object loaded');
     // });
     function addLights(){
-        var light0 = new THREE.AmbientLight(0x202020);
+        var light0 = new THREE.AmbientLight(0x666666);
         light0.name = 'road';
         scene.add(light0);
         var light1 = new THREE.PointLight(0xffffff, 0.5);
         light1.name = 'road';
         light1.position.set(-12, 15, 10);
         scene.add(light1);
-        var light2 = new THREE.DirectionalLight(0xffffff, 0.3);
+        var light2 = new THREE.DirectionalLight(0xffffff, 0.7);
         light2.name = 'road';
         light2.position.set(0, 100, 10);
         scene.add(light2);
@@ -141,6 +145,44 @@ function PlayerPOV(_propIDMatrix){
         }
     }
 
+    function updatePlayer(id, props, pid){
+        // console.log('player - ' + id.toString());
+        var spt = undefined;
+        if(document.getElementById(id) == undefined){
+            spt = v4v.ellipse(stage, {cx:playerPos.x, cy:playerPos.y, rx:20, ry:30, transform:"rotate("+playerPos.r+","+playerPos.x+","+playerPos.y+")"}).getElement();
+            // spt.setAttribute('style', 'left:'+playerPos.x+'px;;top:'+playerPos.y+'px;');
+            spt.setAttribute('class', 'player-marker-element');
+            spt.setAttribute('id', id);
+            // listItem.innerHTML = e.greeting;
+            playerContainer.appendChild(spt);
+        }
+        else if(id != pid){
+            // console.log(props);
+            spt = document.getElementById(id);
+            spt.setAttribute("cx", props.x.toString());
+            spt.setAttribute("cy", props.y.toString());
+            spt.setAttribute("rot", props.r);
+            spt.setAttribute("transform", "rotate("+props.r+","+props.x+","+props.y+")")
+        }
+        return spt;
+    }
+
+    this.getPlayerID = function () {
+        return playerIdentifier;
+    }
+
+    this.getPlayerProperties = function(){
+        return playerPos;
+    }
+
+    this.setPlayerProperty = function(p,v){
+        playerPos[p] = v;
+    }
+
+    this.playerUpdate = function (id, props, pid) {
+        updatePlayer(id, props, pid);
+    }
+
     this.loadModel = function(modelFile,colors,name,handler){
         var loader = new THREE.ObjectLoader();
         loader.load(modelFile, function (g) {
@@ -197,8 +239,8 @@ function PlayerPOV(_propIDMatrix){
         renderer.render(scene, camera);
     }
 
-    this.update = function (_id, _pp){
-        updatePlayer(_id, _pp);
+    this.update = function (_id){
+        updatePlayer(_id, playerPos);
         renderer.render(scene, camera);
         updateRender();
     }
